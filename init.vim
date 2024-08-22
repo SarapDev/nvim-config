@@ -38,6 +38,8 @@ Plug 'akinsho/git-conflict.nvim'
 Plug 'folke/todo-comments.nvim'
 
 Plug 'folke/trouble.nvim'
+
+Plug 'nvim-neotest/nvim-nio'
 call plug#end()
 
 source ~/.config/nvim/scirpt_init.lua
