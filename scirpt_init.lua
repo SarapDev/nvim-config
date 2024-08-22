@@ -111,7 +111,18 @@ require("nvim-dap-virtual-text").setup {
                                            -- e.g. 80 to position at column 80, see `:h nvim_buf_set_extmark()`
 }
 
-require('dap-go').setup()
+require('dap-go').setup({
+    dap_configurations = {
+        {
+            type = "go",
+            name = "Debug (Build Flags & Arguments)",
+            request = "launch",
+            program = "${file}",
+            args = require("dap-go").get_arguments,
+            buildFlags = require("dap-go").get_build_flags,
+        },
+    }
+})
 
 require('todo-comments').setup()
 

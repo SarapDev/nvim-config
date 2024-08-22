@@ -149,7 +149,8 @@ local variables = function(opts)
       for _, d in pairs(definition_nodes) do
         local node = utils.get_at_path(d, 'var.node') or utils.get_at_path(d, 'parameter.node')
         if node then
-          local name = vim.treesitter.query.get_node_text(node, buf)[1]
+          local get_node_text = vim.treesitter.get_node_text or vim.treesitter.query.get_node_text
+          local name = get_node_text(node, buf)[1]
 
           if variables[name] then
             local lnum, col = node:start()
@@ -235,34 +236,6 @@ end
 return telescope.register_extension {
   setup = function()
     vim.cmd [[ highlight default link NvimDapSubtleFrame Comment ]]
-
-    require('dap.ui').pick_one = function(items, prompt, label_fn, cb)
-      local opts = {}
-      pickers.new(opts, {
-        prompt_title = prompt,
-        finder    = finders.new_table {
-          results = items,
-          entry_maker = function(entry)
-            return {
-              value = entry,
-              display = label_fn(entry),
-              ordinal = label_fn(entry),
-            }
-          end,
-        },
-        sorter = conf.generic_sorter(opts),
-        attach_mappings = function(prompt_bufnr)
-          actions.select_default:replace(function()
-            local selection = action_state.get_selected_entry()
-            actions.close(prompt_bufnr)
-
-            cb(selection.value)
-          end)
-
-          return true
-        end,
-      }):find()
-    end
   end,
   exports = {
     commands = commands,
