@@ -58,6 +58,12 @@ end)
 
 local cmp = require('cmp')
 
+cmp.setup({
+  mapping = cmp.mapping.preset.insert({
+    ['<CR>'] = cmp.mapping.confirm({ select = false }),
+  })
+})
+
 require'lspconfig'.phpactor.setup{}
 require'lspconfig'.gopls.setup{}
 require'lspconfig'.ccls.setup {
