@@ -65,7 +65,17 @@ cmp.setup({
 })
 
 require'lspconfig'.phpactor.setup{}
-require'lspconfig'.gopls.setup{}
+require'lspconfig'.gopls.setup{
+ settings = {
+    gopls = {
+      analyses = {
+        unusedparams = true,
+      },
+      staticcheck = true,
+      gofumpt = true,
+    },
+  },
+}
 require'lspconfig'.ccls.setup {
   init_options = {
     compilationDatabaseDirectory = "build";
