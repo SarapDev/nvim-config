@@ -42,6 +42,8 @@ Plug 'folke/trouble.nvim'
 Plug 'nvim-neotest/nvim-nio'
 
 Plug 'Raimondi/delimitMate'
+
+Plug 'rust-lang/rust.vim'
 call plug#end()
 
 source ~/.config/nvim/scirpt_init.lua
@@ -57,3 +59,6 @@ set splitbelow
 set tabstop=4
 set shiftwidth=4
 set noexpandtab
+
+syntax enable
+filetype plugin indent on

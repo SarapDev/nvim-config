@@ -88,8 +88,8 @@ require'lspconfig'.ccls.setup {
   }
 }
 
-require'lspconfig'.ccls.setup{}
-require'lspconfig'.ccls.setup{}
+require'lspconfig'.rust_analyzer.setup{}
+
 require('telescope').setup()
 require('telescope').load_extension('dap')
 
