@@ -11,10 +11,16 @@ Plug 'neovim/nvim-lspconfig'
 " Autocompletion
 Plug 'hrsh7th/nvim-cmp'
 Plug 'hrsh7th/cmp-nvim-lsp'
+
 Plug 'L3MON4D3/LuaSnip'
 
+Plug 'hrsh7th/cmp-buffer'
+Plug 'hrsh7th/cmp-path'
+Plug 'hrsh7th/cmp-cmdline'
+Plug 'hrsh7th/cmp-vsnip'
+Plug 'hrsh7th/vim-vsnip'
+
 Plug 'folke/tokyonight.nvim'
-Plug 'VonHeikemen/lsp-zero.nvim', {'branch': 'v3.x'}
 
 Plug 'nvim-lua/plenary.nvim'
 Plug 'nvim-telescope/telescope.nvim', { 'tag': '0.1.5' }

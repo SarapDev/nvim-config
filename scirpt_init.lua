@@ -48,24 +48,54 @@ require'nvim-web-devicons'.setup {
  };
 }
 require'nvim-web-devicons'.get_icons()
-local lsp_zero = require('lsp-zero')
-
-lsp_zero.on_attach(function(client, bufnr)
-  -- see :help lsp-zero-keybindings
-  -- to learn the available actions
-  lsp_zero.default_keymaps({buffer = bufnr})
-end)
 
 local cmp = require('cmp')
 
 cmp.setup({
-  mapping = cmp.mapping.preset.insert({
-    ['<CR>'] = cmp.mapping.confirm({ select = false }),
-  })
+    snippet = {
+      -- REQUIRED - you must specify a snippet engine
+      expand = function(args)
+        vim.fn["vsnip#anonymous"](args.body) -- For `vsnip` users.
+        -- require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
+        -- require('snippy').expand_snippet(args.body) -- For `snippy` users.
+        -- vim.fn["UltiSnips#Anon"](args.body) -- For `ultisnips` users.
+        -- vim.snippet.expand(args.body) -- For native neovim snippets (Neovim v0.10+)
+
+        -- For `mini.snippets` users:
+        -- local insert = MiniSnippets.config.expand.insert or MiniSnippets.default_insert
+        -- insert({ body = args.body }) -- Insert at cursor
+        -- cmp.resubscribe({ "TextChangedI", "TextChangedP" })
+        -- require("cmp.config").set_onetime({ sources = {} })
+      end,
+    },
+    window = {
+      -- completion = cmp.config.window.bordered(),
+      -- documentation = cmp.config.window.bordered(),
+    },
+    mapping = cmp.mapping.preset.insert({
+      ['<C-b>'] = cmp.mapping.scroll_docs(-4),
+      ['<C-f>'] = cmp.mapping.scroll_docs(4),
+      ['<C-Space>'] = cmp.mapping.complete(),
+      ['<C-e>'] = cmp.mapping.abort(),
+      ['<CR>'] = cmp.mapping.confirm({ select = false }), -- Accept currently selected item. Set `select` to `false` to only confirm explicitly selected items.
+    }),
+    sources = cmp.config.sources({
+      { name = 'nvim_lsp' },
+      { name = 'vsnip' }, -- For vsnip users.
+      -- { name = 'luasnip' }, -- For luasnip users.
+      -- { name = 'ultisnips' }, -- For ultisnips users.
+      -- { name = 'snippy' }, -- For snippy users.
+    }, {
+      { name = 'buffer' },
+    })
 })
 
-require'lspconfig'.phpactor.setup{}
-require'lspconfig'.gopls.setup{
+vim.lsp.enable('phpactor')
+vim.lsp.enable('gopls')
+vim.lsp.enable('ccls')
+vim.lsp.enable('rust_analyzer')
+
+vim.lsp.config('gopls', {
  settings = {
     gopls = {
       analyses = {
@@ -75,8 +105,9 @@ require'lspconfig'.gopls.setup{
       gofumpt = true,
     },
   },
-}
-require'lspconfig'.ccls.setup {
+})
+
+vim.lsp.config('ccls', {
   init_options = {
     compilationDatabaseDirectory = "build";
     index = {
@@ -86,9 +117,7 @@ require'lspconfig'.ccls.setup {
       excludeArgs = { "-frounding-math"} ;
     };
   }
-}
-
-require'lspconfig'.rust_analyzer.setup{}
+})
 
 require('telescope').setup()
 require('telescope').load_extension('dap')
@@ -154,7 +183,7 @@ dap.configurations.php = {
     type = 'php',
     request = 'launch',
     name = 'Listen for Xdebug',
-    port = 9003,
+    port = 9000,
     pathMappings = {
         ['/code/'] = "${workspaceFolder}", 
     },
