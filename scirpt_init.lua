@@ -95,6 +95,30 @@ vim.lsp.enable('gopls')
 vim.lsp.enable('ccls')
 vim.lsp.enable('rust_analyzer')
 
+local vue_plugin = {
+  name = '@vue/typescript-plugin',
+  location = '/Users/sarapulov/.nvm/versions/node/v20.15.1/lib/node_modules/@vue/language-server/',
+  languages = { 'vue' },
+  configNamespace = 'typescript',
+}
+local vtsls_config = {
+  settings = {
+    vtsls = {
+      tsserver = {
+        globalPlugins = {
+          vue_plugin,
+        },
+      },
+    },
+  },
+  filetypes = { 'typescript', 'javascript', 'javascriptreact', 'typescriptreact', 'vue' },
+}
+
+vim.lsp.config('vtsls', vtsls_config)
+vim.lsp.enable({'vtsls', 'vue_ls'})
+
+vim.lsp.enable('eslint')
+
 vim.lsp.config('gopls', {
  settings = {
     gopls = {
@@ -183,7 +207,7 @@ dap.configurations.php = {
     type = 'php',
     request = 'launch',
     name = 'Listen for Xdebug',
-    port = 9000,
+    port = 9003,
     pathMappings = {
         ['/code/'] = "${workspaceFolder}", 
     },
