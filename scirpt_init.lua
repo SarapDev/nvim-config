@@ -92,6 +92,7 @@ cmp.setup({
 
 vim.lsp.enable('phpactor')
 vim.lsp.enable('gopls')
+vim.lsp.enable('golangci_lint_ls')
 vim.lsp.enable('ccls')
 vim.lsp.enable('rust_analyzer')
 
@@ -119,6 +120,16 @@ vim.lsp.enable({'vtsls', 'vue_ls'})
 
 vim.lsp.enable('eslint')
 
+vim.lsp.config('golangci_lint_ls', {
+ init_options = {
+  command = {
+    "golangci-lint", 
+    "run", 
+    "--output.text.path=stdout", 
+    "--show-stats=false"
+   }
+  }
+})
 vim.lsp.config('gopls', {
  settings = {
     gopls = {

@@ -50,6 +50,7 @@ Plug 'nvim-neotest/nvim-nio'
 Plug 'Raimondi/delimitMate'
 
 Plug 'rust-lang/rust.vim'
+Plug 'charlespascoe/vim-go-syntax'
 call plug#end()
 
 source ~/.config/nvim/scirpt_init.lua
