@@ -95,6 +95,8 @@ vim.lsp.enable('gopls')
 vim.lsp.enable('golangci_lint_ls')
 vim.lsp.enable('ccls')
 vim.lsp.enable('rust_analyzer')
+vim.lsp.enable('pylsp')
+vim.lsp.enable("jdtls")
 
 local vue_plugin = {
   name = '@vue/typescript-plugin',
@@ -119,6 +121,63 @@ vim.lsp.config('vtsls', vtsls_config)
 vim.lsp.enable({'vtsls', 'vue_ls'})
 
 vim.lsp.enable('eslint')
+
+local home = os.getenv('HOME')
+local jdtls = require('jdtls')
+local workspace_folder = home .. "/.local/share/eclipse/" .. vim.fn.fnamemodify(root_dir, ":p:h:t")
+local root_markers = {'gradlew', 'mvnw', '.git'}
+local root_dir = require('jdtls.setup').find_root(root_markers)
+vim.lsp.config("jdtls", {
+  settings = {
+    java = {
+        -- Custom eclipse.jdt.ls options go here
+      configuration = {
+        runtimes = {
+          {
+            name = "OpenJDK 25",
+            path = "/opt/homebrew/opt/openjdk@25",
+          },
+          {
+            name = "OpenJDK 11",
+            path = "/opt/homebrew/opt/openjdk@11", 
+          },
+        },
+      },
+    },
+  },
+  on_attach = on_attach,  -- We pass our on_attach keybindings to the configuration map
+  root_dir = root_dir,
+  cmd = {
+    "/opt/homebrew/opt/openjdk@25/bin/java",
+    '-Declipse.application=org.eclipse.jdt.ls.core.id1',
+    '-Dosgi.bundles.defaultStartLevel=4',
+    '-Declipse.product=org.eclipse.jdt.ls.core.product',
+    '-Dlog.protocol=true',
+    '-Dlog.level=ALL',
+    '-Xmx4g',
+    '--add-modules=ALL-SYSTEM',
+    '--add-opens', 'java.base/java.util=ALL-UNNAMED',
+    '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+
+    -- The jar file is located where jdtls was installed. This will need to be updated
+    -- to the location where you installed jdtls
+    '-jar', vim.fn.glob('/opt/homebrew/Cellar/jdtls/1.52.0/libexec/plugins/org.eclipse.equinox.launcher_*.jar'),
+
+    -- The configuration for jdtls is also placed where jdtls was installed. This will
+    -- need to be updated depending on your environment
+    '-configuration', '/opt/homebrew/Cellar/jdtls/1.52.0/libexec/config_mac',
+
+    -- Use the workspace_folder defined above to store data for this project
+    '-data', workspace_folder,
+  },
+})
+
+local springboot_nvim = require("springboot-nvim")
+vim.keymap.set('n', '<leader>Jr', springboot_nvim.boot_run, {desc = "Spring Boot Run Project"})
+vim.keymap.set('n', '<leader>Jc', springboot_nvim.generate_class, {desc = "Java Create Class"})
+vim.keymap.set('n', '<leader>Ji', springboot_nvim.generate_interface, {desc = "Java Create Interface"})
+vim.keymap.set('n', '<leader>Je', springboot_nvim.generate_enum, {desc = "Java Create Enum"})
+springboot_nvim.setup({})
 
 vim.lsp.config('golangci_lint_ls', {
  init_options = {

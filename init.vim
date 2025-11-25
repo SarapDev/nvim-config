@@ -51,11 +51,14 @@ Plug 'Raimondi/delimitMate'
 
 Plug 'rust-lang/rust.vim'
 Plug 'charlespascoe/vim-go-syntax'
+
+Plug 'mfussenegger/nvim-jdtls'
+Plug 'elmcgill/springboot-nvim'
 call plug#end()
 
 source ~/.config/nvim/scirpt_init.lua
 
-colorscheme tokyonight-night
+colorscheme tokyonight-moon
 
 set number
 set relativenumber
