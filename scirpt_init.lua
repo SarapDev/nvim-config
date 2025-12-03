@@ -2,8 +2,35 @@
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
 
+-- Example for Neovim, adjust paths as needed
+package.path = package.path .. ";/opt/homebrew/share/lua/5.4/?.lua"
+package.path = package.path .. ";/opt/homebrew/share/lua/5.4/?/init.lua"
+package.cpath = package.cpath .. ";/opt/homebrew/share/lua/5.4/?.so"
+
 -- empty setup using defaults
 require("nvim-tree").setup()
+
+require("xml2lua")
+require("mimetypes")
+
+require('json-fold').setup()
+
+-- keybinding for the min (un-)fold actions
+vim.api.nvim_set_keymap('n', '<leader>jc', ':JsonFoldFromCursor<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<leader>jd', ':JsonUnfoldFromCursor<CR>', { noremap = true, silent = true })
+
+-- keybinding for the max (un-)fold actions
+vim.api.nvim_set_keymap('n', '<leader>jC', ':JsonMaxFoldFromCursor<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<leader>jD', ':JsonMaxUnfoldFromCursor<CR>', { noremap = true, silent = true })
+
+require("rest-nvim").setup({
+  result = {
+    formatters = {
+      json = "jq",
+      vnd = "jq"
+    },
+  },
+})
 
 require'nvim-web-devicons'.setup {
  -- your personnal icons can go here (to override)
@@ -127,6 +154,7 @@ local jdtls = require('jdtls')
 local workspace_folder = home .. "/.local/share/eclipse/" .. vim.fn.fnamemodify(root_dir, ":p:h:t")
 local root_markers = {'gradlew', 'mvnw', '.git'}
 local root_dir = require('jdtls.setup').find_root(root_markers)
+local lombok_path = '/opt/homebrew/Cellar/jdtls/1.52.0/libexec/plugins/lombok.jar'
 vim.lsp.config("jdtls", {
   settings = {
     java = {
@@ -154,6 +182,7 @@ vim.lsp.config("jdtls", {
     '-Declipse.product=org.eclipse.jdt.ls.core.product',
     '-Dlog.protocol=true',
     '-Dlog.level=ALL',
+    '-javaagent:' .. lombok_path,
     '-Xmx4g',
     '--add-modules=ALL-SYSTEM',
     '--add-opens', 'java.base/java.util=ALL-UNNAMED',

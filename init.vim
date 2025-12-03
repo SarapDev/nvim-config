@@ -54,6 +54,13 @@ Plug 'charlespascoe/vim-go-syntax'
 
 Plug 'mfussenegger/nvim-jdtls'
 Plug 'elmcgill/springboot-nvim'
+
+Plug 'nvim-lua/plenary.nvim'
+
+Plug 'rest-nvim/rest.nvim'
+Plug 'j-hui/fidget.nvim'
+
+Plug 'jvdmeulen/json-fold.nvim'
 call plug#end()
 
 source ~/.config/nvim/scirpt_init.lua
