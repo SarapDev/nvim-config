@@ -61,6 +61,8 @@ Plug 'rest-nvim/rest.nvim'
 Plug 'j-hui/fidget.nvim'
 
 Plug 'jvdmeulen/json-fold.nvim'
+
+Plug 'sindrets/diffview.nvim'
 call plug#end()
 
 source ~/.config/nvim/scirpt_init.lua

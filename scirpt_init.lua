@@ -169,6 +169,10 @@ vim.lsp.config("jdtls", {
             name = "OpenJDK 11",
             path = "/opt/homebrew/opt/openjdk@11", 
           },
+          {
+            name = "Zulu 8",
+            path = "/Library/Java/JavaVirtualMachines/zulu-8.jdk/Contents/Home",
+          },
         },
       },
     },

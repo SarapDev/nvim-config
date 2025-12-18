@@ -1,0 +1,272 @@
+---
+- name: Setup Neovim Development Environment
+  hosts: localhost
+  connection: local
+  become: false
+  
+  vars:
+    home_dir: "{{ ansible_env.HOME }}"
+    nvim_config_dir: "{{ home_dir }}/.config/nvim"
+    node_version: "20.15.1"
+    
+  tasks:
+    - name: Detect OS
+      set_fact:
+        is_macos: "{{ ansible_os_family == 'Darwin' }}"
+        is_linux: "{{ ansible_os_family in ['Debian', 'RedHat'] }}"
+
+    # macOS Setup
+    - name: Install Homebrew packages (macOS)
+      when: is_macos
+      community.general.homebrew:
+        name:
+          - neovim
+          - lua
+          - luarocks
+          - node
+          - npm
+          - jq
+          - go
+          - gopls
+          - golangci-lint
+          - rust
+          - rust-analyzer
+          - python3
+          - openjdk@25
+          - openjdk@11
+          - jdtls
+          - php
+          - composer
+          - ccls
+        state: present
+
+    # Linux Setup (Debian/Ubuntu)
+    - name: Install APT packages (Debian/Ubuntu)
+      when: ansible_os_family == 'Debian'
+      become: true
+      apt:
+        name:
+          - neovim
+          - lua5.4
+          - luarocks
+          - nodejs
+          - npm
+          - jq
+          - golang
+          - rustc
+          - cargo
+          - python3
+          - python3-pip
+          - openjdk-21-jdk
+          - openjdk-11-jdk
+          - php
+          - composer
+          - ccls
+          - build-essential
+          - git
+          - curl
+          - unzip
+        state: present
+        update_cache: yes
+
+    # Linux Setup (RHEL/Fedora/CentOS)
+    - name: Install DNF packages (RHEL/Fedora)
+      when: ansible_os_family == 'RedHat'
+      become: true
+      dnf:
+        name:
+          - neovim
+          - lua
+          - luarocks
+          - nodejs
+          - npm
+          - jq
+          - golang
+          - rust
+          - cargo
+          - python3
+          - python3-pip
+          - java-21-openjdk
+          - java-11-openjdk
+          - php
+          - composer
+          - ccls
+          - gcc
+          - gcc-c++
+          - make
+          - git
+          - curl
+          - unzip
+        state: present
+
+    # NVM and Node.js setup
+    - name: Check if NVM is installed
+      stat:
+        path: "{{ home_dir }}/.nvm/nvm.sh"
+      register: nvm_installed
+
+    - name: Install NVM
+      when: not nvm_installed.stat.exists
+      shell: |
+        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+      args:
+        creates: "{{ home_dir }}/.nvm/nvm.sh"
+
+    - name: Install Node.js via NVM
+      shell: |
+        source {{ home_dir }}/.nvm/nvm.sh && nvm install {{ node_version }} && nvm use {{ node_version }}
+      args:
+        executable: /bin/bash
+        creates: "{{ home_dir }}/.nvm/versions/node/v{{ node_version }}"
+
+    # Lua packages
+    - name: Install Lua packages via luarocks
+      community.general.luarocks:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - xml2lua
+        - mimetypes
+      ignore_errors: yes
+
+    # Python LSP
+    - name: Install Python LSP server
+      pip:
+        name: python-lsp-server
+        state: present
+        extra_args: --user
+
+    # Go tools
+    - name: Install Go LSP and tools
+      shell: |
+        go install golang.org/x/tools/gopls@latest
+        go install github.com/nametake/golangci-lint-langserver@latest
+        go install github.com/go-delve/delve/cmd/dlv@latest
+      args:
+        executable: /bin/bash
+      environment:
+        PATH: "{{ home_dir }}/go/bin:{{ ansible_env.PATH }}"
+      ignore_errors: yes
+
+    # Rust tools
+    - name: Install Rust analyzer
+      shell: |
+        rustup component add rust-analyzer
+      args:
+        executable: /bin/bash
+      ignore_errors: yes
+
+    # PHP tools
+    - name: Install Composer globally (if not installed)
+      shell: |
+        curl -sS https://getcomposer.org/installer | php
+        sudo mv composer.phar /usr/local/bin/composer
+      args:
+        creates: /usr/local/bin/composer
+      when: is_linux
+      become: true
+      ignore_errors: yes
+
+    - name: Install Phpactor
+      shell: |
+        composer global require phpactor/phpactor
+      args:
+        executable: /bin/bash
+      ignore_errors: yes
+
+    # Node.js packages
+    - name: Install global npm packages
+      npm:
+        name: "{{ item }}"
+        global: yes
+        state: present
+      loop:
+        - vscode-langservers-extracted  # for eslint LSP
+        - '@vue/language-server'
+        - typescript
+        - typescript-language-server
+      environment:
+        PATH: "{{ home_dir }}/.nvm/versions/node/v{{ node_version }}/bin:{{ ansible_env.PATH }}"
+      ignore_errors: yes
+
+    # PHP Debug Adapter
+    - name: Create PHP debug directory
+      file:
+        path: "{{ home_dir }}/php"
+        state: directory
+
+    - name: Clone vscode-php-debug
+      git:
+        repo: https://github.com/xdebug/vscode-php-debug.git
+        dest: "{{ home_dir }}/php/vscode-php-debug"
+        version: main
+        update: no
+
+    - name: Install vscode-php-debug dependencies
+      npm:
+        path: "{{ home_dir }}/php/vscode-php-debug"
+        state: present
+      environment:
+        PATH: "{{ home_dir }}/.nvm/versions/node/v{{ node_version }}/bin:{{ ansible_env.PATH }}"
+
+    - name: Build vscode-php-debug
+      shell: |
+        source {{ home_dir }}/.nvm/nvm.sh && npm run build
+      args:
+        chdir: "{{ home_dir }}/php/vscode-php-debug"
+        executable: /bin/bash
+        creates: "{{ home_dir }}/php/vscode-php-debug/out/phpDebug.js"
+
+    # JDTLS setup (Linux only, macOS uses Homebrew)
+    - name: Download and install JDTLS (Linux)
+      when: is_linux
+      block:
+        - name: Create JDTLS directory
+          file:
+            path: /opt/jdtls
+            state: directory
+          become: true
+
+        - name: Download JDTLS
+          get_url:
+            url: https://download.eclipse.org/jdtls/milestones/1.40.0/jdt-language-server-1.40.0-202409261450.tar.gz
+            dest: /tmp/jdtls.tar.gz
+          become: true
+
+        - name: Extract JDTLS
+          unarchive:
+            src: /tmp/jdtls.tar.gz
+            dest: /opt/jdtls
+            remote_src: yes
+          become: true
+
+    # Lombok
+    - name: Download Lombok JAR (Linux)
+      when: is_linux
+      get_url:
+        url: https://projectlombok.org/downloads/lombok.jar
+        dest: /opt/lombok.jar
+      become: true
+
+    # Neovim plugin manager (lazy.nvim or packer)
+    - name: Create Neovim config directory
+      file:
+        path: "{{ nvim_config_dir }}/lua"
+        state: directory
+        recurse: yes
+
+    - name: Install lazy.nvim plugin manager
+      git:
+        repo: https://github.com/folke/lazy.nvim.git
+        dest: "{{ home_dir }}/.local/share/nvim/lazy/lazy.nvim"
+        version: stable
+        update: no
+
+    - name: Display completion message
+      debug:
+        msg:
+          - "Neovim setup complete!"
+          - "Please run 'nvim' and execute ':Lazy install' to install all plugins"
+          - "You may need to restart your shell to use newly installed tools"
+          - "For Go tools, ensure {{ home_dir }}/go/bin is in your PATH"
+          - "For Composer tools, ensure {{ home_dir }}/.composer/vendor/bin is in your PATH"
