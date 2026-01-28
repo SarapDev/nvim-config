@@ -28,14 +28,10 @@
           - yarn
           - jq
           - go
-          - gopls
-          - golangci-lint
           - rust
-          - rust-analyzer
           - python3
-          - openjdk@25
+          - openjdk@21
           - openjdk@11
-          - jdtls
           - php
           - composer
           - llvm
@@ -51,6 +47,15 @@
           - iterm2
           - kitty
         state: present
+
+    - name: Symlink OpenJDK 21 for macOS
+      when: is_macos
+      become: true
+      file:
+        src: "/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk"
+        dest: "/Library/Java/JavaVirtualMachines/openjdk-21.jdk"
+        state: link
+        force: yes
 
     # Linux Setup (Debian/Ubuntu)
     - name: Install APT packages (Debian/Ubuntu)
@@ -73,7 +78,6 @@
           - openjdk-11-jdk
           - php
           - composer
-          - clangd
           - cmake
           - build-essential
           - git
@@ -105,7 +109,6 @@
           - java-11-openjdk
           - php
           - composer
-          - clang-tools-extra
           - cmake
           - gcc
           - gcc-c++
@@ -155,7 +158,7 @@
       shell: |
         export PATH="{{ home_dir }}/.jenv/bin:$PATH"
         eval "$(jenv init -)"
-        jenv add /opt/homebrew/opt/openjdk@25 || true
+        jenv add /opt/homebrew/opt/openjdk@21 || true
         jenv add /opt/homebrew/opt/openjdk@11 || true
       args:
         executable: /bin/bash
@@ -174,148 +177,25 @@
         executable: /bin/bash
       ignore_errors: yes
 
-    # Lua packages
-    - name: Install Lua packages via luarocks
-      community.general.luarocks:
-        name: "{{ item }}"
-        state: present
-      loop:
-        - xml2lua
-        - mimetypes
-      ignore_errors: yes
-
-    # Python packages
-    - name: Install Python packages
-      pip:
-        name:
-          - python-lsp-server
-          - debugpy
-        state: present
-        extra_args: --user
-
-    # Go tools
-    - name: Install Go LSP and tools
-      shell: |
-        go install golang.org/x/tools/gopls@latest
-        go install github.com/nametake/golangci-lint-langserver@latest
-        go install github.com/go-delve/delve/cmd/dlv@latest
-      args:
-        executable: /bin/bash
-      environment:
-        PATH: "{{ home_dir }}/go/bin:{{ ansible_env.PATH }}"
-      ignore_errors: yes
-
-    # Rust tools
-    - name: Install Rust analyzer
-      shell: |
-        rustup component add rust-analyzer
-      args:
-        executable: /bin/bash
-      ignore_errors: yes
-
-    # PHP tools
-    - name: Install Composer globally (if not installed)
-      shell: |
-        curl -sS https://getcomposer.org/installer | php
-        sudo mv composer.phar /usr/local/bin/composer
-      args:
-        creates: /usr/local/bin/composer
-      when: is_linux
-      become: true
-      ignore_errors: yes
-
-    - name: Install Phpactor
-      shell: |
-        composer global require phpactor/phpactor
-      args:
-        executable: /bin/bash
-      ignore_errors: yes
-
-    # Node.js packages
+    # Node.js packages (Global requirements for some LSPs/Plugins)
     - name: Install global npm packages
       npm:
         name: "{{ item }}"
         global: yes
         state: present
       loop:
-        - vscode-langservers-extracted  # for eslint, jsonls, cssls, htmls
         - '@vue/language-server'
         - typescript
-        - typescript-language-server
-        - vtsls
-        - eslint
         - yarn
       environment:
         PATH: "{{ home_dir }}/.nvm/versions/node/v{{ node_version }}/bin:{{ ansible_env.PATH }}"
       ignore_errors: yes
 
-    # PHP Debug Adapter
-    - name: Create PHP debug directory
-      file:
-        path: "{{ home_dir }}/php"
-        state: directory
-
-    - name: Clone vscode-php-debug
-      git:
-        repo: https://github.com/xdebug/vscode-php-debug.git
-        dest: "{{ home_dir }}/php/vscode-php-debug"
-        version: main
-        update: no
-
-    - name: Install vscode-php-debug dependencies
-      npm:
-        path: "{{ home_dir }}/php/vscode-php-debug"
+    # Neovim Setup (Bootstrap lazy.nvim is handled by init.lua, but we ensure git is here)
+    - name: Ensure git is installed for lazy.nvim
+      package:
+        name: git
         state: present
-      environment:
-        PATH: "{{ home_dir }}/.nvm/versions/node/v{{ node_version }}/bin:{{ ansible_env.PATH }}"
-
-    - name: Build vscode-php-debug
-      shell: |
-        source {{ home_dir }}/.nvm/nvm.sh && npm run build
-      args:
-        chdir: "{{ home_dir }}/php/vscode-php-debug"
-        executable: /bin/bash
-        creates: "{{ home_dir }}/php/vscode-php-debug/out/phpDebug.js"
-
-    # JDTLS setup (Linux only, macOS uses Homebrew)
-    - name: Download and install JDTLS (Linux)
-      when: is_linux
-      block:
-        - name: Create JDTLS directory
-          file:
-            path: /opt/jdtls
-            state: directory
-          become: true
-
-        - name: Download JDTLS
-          get_url:
-            url: https://download.eclipse.org/jdtls/milestones/1.40.0/jdt-language-server-1.40.0-202409261450.tar.gz
-            dest: /tmp/jdtls.tar.gz
-          become: true
-
-        - name: Extract JDTLS
-          unarchive:
-            src: /tmp/jdtls.tar.gz
-            dest: /opt/jdtls
-            remote_src: yes
-          become: true
-
-    # Lombok
-    - name: Download Lombok JAR (Linux)
-      when: is_linux
-      get_url:
-        url: https://projectlombok.org/downloads/lombok.jar
-        dest: /opt/lombok.jar
-      become: true
-
-    # Neovim plugin manager (vim-plug)
-    - name: Install vim-plug
-      shell: |
-        curl -fLo "{{ home_dir }}/.local/share/nvim/site/autoload/plug.vim" --create-dirs \
-          https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-      args:
-        creates: "{{ home_dir }}/.local/share/nvim/site/autoload/plug.vim"
-        executable: /bin/bash
 
     - name: Create Neovim config directory
       file:
@@ -327,7 +207,7 @@
       debug:
         msg:
           - "Neovim setup complete!"
-          - "Please run 'nvim' and execute ':PlugInstall' to install all plugins"
+          - "Please run 'nvim' - lazy.nvim will automatically install all plugins"
           - "You may need to restart your shell to use newly installed tools"
           - "zsh, iTerm2/Kitty have been installed. You can switch terminal to your preference."
           - "For jEnv and NVM, ensure you have initialized them in your shell profile (.zshrc or .bashrc):"

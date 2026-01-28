@@ -1,0 +1,14 @@
+# Neovim temp files
+*.swp
+*.swo
+undo/
+spell/
+view/
+
+# Local logs
+*.log
+
+# Plugin manager folders
+lazy-lock.json
+plugged/
+.netrwhist

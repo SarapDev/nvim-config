@@ -62,22 +62,20 @@ export PATH="$HOME/go/bin:$PATH"
 Then reload your shell: `source ~/.zshrc`.
 
 ### 2. Neovim Plugins
-Open Neovim and install the plugins using `vim-plug`:
-```vim
-:PlugInstall
-```
+Open Neovim. `lazy.nvim` will automatically start installing the listed plugins.
 
-### 3. Language Servers
-Most language servers are installed automatically by the playbook. For Treesitter parsers, run:
-```vim
-:TSUpdate
-```
+### 3. Language Servers and Tools
+This setup uses **Mason** to manage LSPs, Linters, and Formatters.
+- Open Neovim.
+- Run `:Mason` to see the status of installed tools.
+- Most tools (gopls, clangd, rust_analyzer, etc.) are set to auto-install on the first run.
 
 ## Features Included
-- **Neovim**: Custom config with `vim-plug`.
-- **NVM**: Node.js version management (defaulting to v20.15.1).
-- **jEnv**: Java version management with OpenJDK 11 and 25.
-- **LSPs**: Support for Java, Go, Python, Rust, C/C++, Vue, TypeScript, and more.
+- **Modular Lua Config**: Clean and maintainable structure in `lua/`.
+- **lazy.nvim**: Modern, fast plugin manager with lazy-loading support.
+- **Mason**: Easy management of LSPs, DAPs, and more from within Neovim.
+- **NVM**: Node.js version management.
+- **jEnv**: Java version management with OpenJDK support.
 - **Terminals**: iTerm2 and Kitty (macOS) or Kitty (Linux).
 - **Shell**: zsh.
 
