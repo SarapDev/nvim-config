@@ -25,6 +25,7 @@
           - luarocks
           - node
           - npm
+          - yarn
           - jq
           - go
           - gopls
@@ -37,7 +38,18 @@
           - jdtls
           - php
           - composer
-          - ccls
+          - llvm
+          - cmake
+          - jenv
+          - zsh
+        state: present
+
+    - name: Install Homebrew casks (macOS)
+      when: is_macos
+      community.general.homebrew_cask:
+        name:
+          - iterm2
+          - kitty
         state: present
 
     # Linux Setup (Debian/Ubuntu)
@@ -61,11 +73,14 @@
           - openjdk-11-jdk
           - php
           - composer
-          - ccls
+          - clangd
+          - cmake
           - build-essential
           - git
           - curl
           - unzip
+          - zsh
+          - kitty
         state: present
         update_cache: yes
 
@@ -90,13 +105,16 @@
           - java-11-openjdk
           - php
           - composer
-          - ccls
+          - clang-tools-extra
+          - cmake
           - gcc
           - gcc-c++
           - make
           - git
           - curl
           - unzip
+          - zsh
+          - kitty
         state: present
 
     # NVM and Node.js setup
@@ -119,6 +137,43 @@
         executable: /bin/bash
         creates: "{{ home_dir }}/.nvm/versions/node/v{{ node_version }}"
 
+    # jEnv Setup
+    - name: Check if jEnv is installed (Linux)
+      when: is_linux
+      stat:
+        path: "{{ home_dir }}/.jenv"
+      register: jenv_dir
+
+    - name: Install jEnv (Linux)
+      when: is_linux and not jenv_dir.stat.exists
+      git:
+        repo: https://github.com/jenv/jenv.git
+        dest: "{{ home_dir }}/.jenv"
+
+    - name: Add Java versions to jEnv (macOS)
+      when: is_macos
+      shell: |
+        export PATH="{{ home_dir }}/.jenv/bin:$PATH"
+        eval "$(jenv init -)"
+        jenv add /opt/homebrew/opt/openjdk@25 || true
+        jenv add /opt/homebrew/opt/openjdk@11 || true
+      args:
+        executable: /bin/bash
+      ignore_errors: yes
+
+    - name: Add Java versions to jEnv (Linux)
+      when: is_linux
+      shell: |
+        export PATH="{{ home_dir }}/.jenv/bin:$PATH"
+        eval "$(jenv init -)"
+        jenv add /usr/lib/jvm/java-21-openjdk-amd64 || true
+        jenv add /usr/lib/jvm/java-11-openjdk-amd64 || true
+        jenv add /usr/lib/jvm/java-21-openjdk || true
+        jenv add /usr/lib/jvm/java-11-openjdk || true
+      args:
+        executable: /bin/bash
+      ignore_errors: yes
+
     # Lua packages
     - name: Install Lua packages via luarocks
       community.general.luarocks:
@@ -129,10 +184,12 @@
         - mimetypes
       ignore_errors: yes
 
-    # Python LSP
-    - name: Install Python LSP server
+    # Python packages
+    - name: Install Python packages
       pip:
-        name: python-lsp-server
+        name:
+          - python-lsp-server
+          - debugpy
         state: present
         extra_args: --user
 
@@ -181,10 +238,13 @@
         global: yes
         state: present
       loop:
-        - vscode-langservers-extracted  # for eslint LSP
+        - vscode-langservers-extracted  # for eslint, jsonls, cssls, htmls
         - '@vue/language-server'
         - typescript
         - typescript-language-server
+        - vtsls
+        - eslint
+        - yarn
       environment:
         PATH: "{{ home_dir }}/.nvm/versions/node/v{{ node_version }}/bin:{{ ansible_env.PATH }}"
       ignore_errors: yes
@@ -248,25 +308,30 @@
         dest: /opt/lombok.jar
       become: true
 
-    # Neovim plugin manager (lazy.nvim or packer)
+    # Neovim plugin manager (vim-plug)
+    - name: Install vim-plug
+      shell: |
+        curl -fLo "{{ home_dir }}/.local/share/nvim/site/autoload/plug.vim" --create-dirs \
+          https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+      args:
+        creates: "{{ home_dir }}/.local/share/nvim/site/autoload/plug.vim"
+        executable: /bin/bash
+
     - name: Create Neovim config directory
       file:
         path: "{{ nvim_config_dir }}/lua"
         state: directory
         recurse: yes
 
-    - name: Install lazy.nvim plugin manager
-      git:
-        repo: https://github.com/folke/lazy.nvim.git
-        dest: "{{ home_dir }}/.local/share/nvim/lazy/lazy.nvim"
-        version: stable
-        update: no
-
     - name: Display completion message
       debug:
         msg:
           - "Neovim setup complete!"
-          - "Please run 'nvim' and execute ':Lazy install' to install all plugins"
+          - "Please run 'nvim' and execute ':PlugInstall' to install all plugins"
           - "You may need to restart your shell to use newly installed tools"
+          - "zsh, iTerm2/Kitty have been installed. You can switch terminal to your preference."
+          - "For jEnv and NVM, ensure you have initialized them in your shell profile (.zshrc or .bashrc):"
+          - "  NVM: [ -s \"$HOME/.nvm/nvm.sh\" ] && . \"$HOME/.nvm/nvm.sh\""
+          - "  jEnv: export PATH=\"$HOME/.jenv/bin:$PATH\" && eval \"$(jenv init -)\""
           - "For Go tools, ensure {{ home_dir }}/go/bin is in your PATH"
           - "For Composer tools, ensure {{ home_dir }}/.composer/vendor/bin is in your PATH"

@@ -23,7 +23,7 @@ Plug 'hrsh7th/vim-vsnip'
 Plug 'folke/tokyonight.nvim'
 
 Plug 'nvim-lua/plenary.nvim'
-Plug 'nvim-telescope/telescope.nvim', { 'tag': '0.1.5' }
+Plug 'nvim-telescope/telescope.nvim'
 
 Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
 Plug 'mfussenegger/nvim-dap'
@@ -63,6 +63,7 @@ Plug 'j-hui/fidget.nvim'
 Plug 'jvdmeulen/json-fold.nvim'
 
 Plug 'sindrets/diffview.nvim'
+Plug 'mfussenegger/nvim-dap-python'
 call plug#end()
 
 source ~/.config/nvim/scirpt_init.lua

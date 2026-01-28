@@ -10,27 +10,81 @@ package.cpath = package.cpath .. ";/opt/homebrew/share/lua/5.4/?.so"
 -- empty setup using defaults
 require("nvim-tree").setup()
 
+vim.keymap.set("v", "<leader>jq", function()
+  vim.cmd("'<,'>!jq .")
+end, { desc = "Format JSON with jq" })
+
+vim.opt.foldmethod = "expr"
+vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+vim.opt.foldlevel = 99
+
+require'nvim-treesitter'.install {
+  'c',
+  'cpp',
+  'go',
+  'gomod',
+  'gosum',
+  'rust',
+  'zig',
+  'python',
+  'java',
+  'lua',
+
+  'bash',
+  'dockerfile',
+  'yaml',
+  'json',
+  'jsonc',
+  'toml',
+  'terraform',
+  'sql',
+
+  'html',
+  'css',
+  'javascript',
+  'typescript',
+  'tsx',
+
+  'make',
+  'cmake',
+  'ninja',
+
+  'gitignore',
+  'gitcommit',
+  'git_rebase',
+
+  'markdown',
+  'markdown_inline',
+}
+
+-- Start Tree-sitter per-buffer (SAFE)
+vim.api.nvim_create_autocmd("FileType", {
+  callback = function(args)
+    pcall(vim.treesitter.start, args.buf)
+  end,
+})
+
+-- 🔑 Compatibility layer for plugins (Telescope, etc.)
+require("nvim-treesitter.parsers")
+
 require("xml2lua")
 require("mimetypes")
 
-require('json-fold').setup()
-
--- keybinding for the min (un-)fold actions
-vim.api.nvim_set_keymap('n', '<leader>jc', ':JsonFoldFromCursor<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>jd', ':JsonUnfoldFromCursor<CR>', { noremap = true, silent = true })
-
--- keybinding for the max (un-)fold actions
-vim.api.nvim_set_keymap('n', '<leader>jC', ':JsonMaxFoldFromCursor<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>jD', ':JsonMaxUnfoldFromCursor<CR>', { noremap = true, silent = true })
-
 require("rest-nvim").setup({
   result = {
+    show_url = true,
+    show_http_info = true,
+    show_headers = true,
     formatters = {
       json = "jq",
       vnd = "jq"
     },
   },
 })
+
+-- keybinding for the rest nvim plugin
+vim.api.nvim_set_keymap('n', '<leader>rer', ':Rest run<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<leader>rel', ':Rest logs<CR>', { noremap = true, silent = true })
 
 require'nvim-web-devicons'.setup {
  -- your personnal icons can go here (to override)
@@ -120,10 +174,12 @@ cmp.setup({
 vim.lsp.enable('phpactor')
 vim.lsp.enable('gopls')
 vim.lsp.enable('golangci_lint_ls')
-vim.lsp.enable('ccls')
+vim.lsp.enable('clangd')
 vim.lsp.enable('rust_analyzer')
 vim.lsp.enable('pylsp')
 vim.lsp.enable("jdtls")
+vim.lsp.enable('cmake')
+vim.lsp.enable('jsonls')
 
 local vue_plugin = {
   name = '@vue/typescript-plugin',
@@ -234,19 +290,13 @@ vim.lsp.config('gopls', {
   },
 })
 
-vim.lsp.config('ccls', {
-  init_options = {
-    compilationDatabaseDirectory = "build";
-    index = {
-      threads = 0;
-    };
-    clang = {
-      excludeArgs = { "-frounding-math"} ;
-    };
-  }
+require('telescope').setup({
+  defaults = {
+    preview = {
+      treesitter = false,
+    },
+  },
 })
-
-require('telescope').setup()
 require('telescope').load_extension('dap')
 
 require("nvim-dap-virtual-text").setup {
@@ -296,6 +346,8 @@ require('dap-go').setup({
     }
 })
 
+require("dap-python").setup("python3")
+
 require('todo-comments').setup()
 
 local dap, dapui = require("dap"), require("dapui")
@@ -315,6 +367,19 @@ dap.configurations.php = {
         ['/code/'] = "${workspaceFolder}", 
     },
   }
+}
+
+require'jdtls'.test_class()
+require'jdtls'.test_nearest_method()
+
+dap.configurations.java = {
+  {
+    type = 'java';
+    request = 'attach';
+    name = "Debug (Attach) - Remote";
+    hostName = "127.0.0.1";
+    port = 5005;
+  },
 }
 
 dapui.setup()
