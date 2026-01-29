@@ -59,7 +59,7 @@ return {
         mason_lspconfig.setup({
           ensure_installed = {
             'gopls', 'golangci_lint_ls', 'clangd', 'rust_analyzer',
-            'pyright', 'jdtls', 'cmake', 'jsonls', 'volar', 'vtsls', 'eslint',
+            'pyright', 'jdtls', 'cmake', 'jsonls', 'vtsls', 'eslint',
           }
         })
 
