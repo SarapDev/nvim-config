@@ -59,7 +59,7 @@ return {
         mason_lspconfig.setup({
           ensure_installed = {
             'gopls', 'golangci_lint_ls', 'clangd', 'rust_analyzer',
-            'pylsp', 'jdtls', 'cmake', 'jsonls', 'volar', 'vtsls', 'eslint',
+            'pyright', 'jdtls', 'cmake', 'jsonls', 'volar', 'vtsls', 'eslint',
           }
         })
 
@@ -135,23 +135,27 @@ return {
 
   -- Treesitter
   {
-    'nvim-treesitter/nvim-treesitter',
-    build = ':TSUpdate',
+    "nvim-treesitter/nvim-treesitter",
+    lazy = false,
+    build = ":TSUpdate",
+    
     config = function()
-      local status, ts_configs = pcall(require, 'nvim-treesitter.configs')
-      if not status then return end
-      ts_configs.setup({
-        ensure_installed = { 
-          'c', 'cpp', 'go', 'rust', 'python', 'java', 'lua', 'bash', 
-          'yaml', 'json', 'toml', 'markdown', 'javascript', 'typescript', 'php'
-        },
-        auto_install = true,
-        highlight = { 
-          enable = true,
-          additional_vim_regex_highlighting = false,
-        },
+      -- Register parsers (compat for plugins)
+      require("nvim-treesitter.parsers")
+
+      -- ❗ DO NOT let nvim-treesitter manage highlights
+      require'nvim-treesitter'.install {
+          "c", "cpp", "go", "rust", "python", "java", "lua", "bash",
+          "yaml", "json", "toml", "markdown", "javascript", "typescript", "php",
+      }
+
+     -- ✅ Start Tree-sitter per buffer (Neovim-native way)
+     vim.api.nvim_create_autocmd("FileType", {
+        callback = function(args)
+          pcall(vim.treesitter.start, args.buf)
+        end,
       })
-    end
+    end,  
   },
 
   -- DAP
